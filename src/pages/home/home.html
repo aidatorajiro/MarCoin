@@ -5,5 +5,38 @@
 </ion-header>
 
 <ion-content padding>
-  
+  <h1>You have {{ marprov.balance }} MAR</h1>
+  <ion-grid>
+    <ion-row>
+      <ion-col col-1>
+        <strong>ID</strong>
+      </ion-col>
+      <ion-col col-3>
+        <strong>予言の内容</strong>
+      </ion-col>
+      <ion-col col-3>
+        <strong>発行者</strong>
+      </ion-col>
+      <ion-col col-3>
+        <strong>所持者</strong>
+      </ion-col>
+    </ion-row>
+    <ion-row *ngFor="let coin of marprov.coins">
+      <ion-col col-1>
+        {{coin.id}}
+      </ion-col>
+      <ion-col col-3>
+        {{coin.content}}
+      </ion-col>
+      <ion-col col-3>
+        {{coin.issuer}}
+      </ion-col>
+      <ion-col col-3>
+        {{coin.owner}}
+      </ion-col>
+      <ion-col col-2>
+        <button ion-button [navPush]="coindetail" [navParams]="coin">詳細</button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>

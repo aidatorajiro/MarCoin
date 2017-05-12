@@ -21,7 +21,7 @@ export class MarCoinProvider {
   status   : string;
   coins    : [Coin];
 
-  start() : void {
+  async start() : Promise<void> {
 
     // Checking if Web3 has been injected by the browser (Mist/MetaMask)
     if (typeof window["web3"] !== 'undefined') {
@@ -38,82 +38,66 @@ export class MarCoinProvider {
     MarCoin.setProvider(web3.currentProvider);
 
     // Get the initial account balance so it can be displayed.
-    web3.eth.getAccounts((err, accs) => {
-      if (err != null) {
-        alert("There was an error fetching your accounts.");
-        return;
-      }
-
-      if (accs.length == 0) {
-        alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
-        return;
-      }
-
-      this.setAccounts(accs);
-      this.setAccount(accs[0]);
-
-      this.refreshBalance();
+    let accs = await new Promise(function (resolve, reject) {
+      web3.eth.getAccounts(function (e, accounts) {
+        if (e != null) {
+          reject(e);
+        } else {
+          resolve(accounts);
+        }
+      });
     });
+
+    this.setAccounts(accs);
+    this.setAccount(accs[0]);
+
+    await this.refreshBalance();
   }
 
-  redraw() : void {
-
-  }
-
-  setBalance (val) {
+  setBalance (val) : void {
     this.balance = val;
-    this.redraw();
   }
 
-  setAccounts (accs) {
+  setAccounts (accs) : void {
     this.accounts = accs;
-    this.redraw();
   }
 
-  setAccount (acc) {
+  setAccount (acc) : void {
     this.account = acc;
-    this.redraw();
   }
 
-  setStatus (message) {
+  setStatus (message) : void {
     this.status = message;
-    this.redraw();
   }
 
-  setCoins (coins) {
+  setCoins (coins) : void {
     this.coins = coins;
-    this.redraw();
   }
 
-  async issueCoin (input_content : string) {
+  async issueCoin (input_content : string) : Promise<void> {
     this.setStatus("Initiating transaction... (please wait)");
 
     try {
       const mar = await MarCoin.deployed();
       await mar.issueCoin(input_content, {from: this.account, gas: 1000000});
       this.setStatus("Transaction complete!");
-      this.refreshBalance();
+      await this.refreshBalance();
     } catch (e) {
       console.log(e);
       this.setStatus("Error issuing coin; see log.");
     }
   }
 
-  async refreshBalance () {
+  async refreshBalance () : Promise<void> {
     try {
-      const mar = await MarCoin.deployed();
-      const value = await mar.getBalance.call(this.account, {from: this.account});
-      this.setBalance(value.valueOf());
-      let coins = [];
+      const mar            = await MarCoin.deployed();
+      const value : number = (await mar.getBalance.call(this.account, {from: this.account})).toNumber();
+      this.setBalance(value);
+      let coins : Coin[] = [];
       let id;
-      for (let i = 0; i < value.toNumber(); i++) {
+      for (let i = 0; i < value; i++) {
         id = await mar.getOwnedCoins.call(this.account, i);
-        coins.push({
-          id,
-          content : await mar.coin_contents(id),
-          issuer  : await mar.coin_issuers(id),
-          owner   : await mar.coin_owners(id)
-        });
+        coins.push(await this.getCoinById(id));
       }
       this.setCoins(coins);
     } catch (e) {
@@ -122,17 +106,27 @@ export class MarCoinProvider {
     }
   }
 
-  async sendCoin (input_receiver : string, input_id : string) {
+  async sendCoin (input_receiver : string, input_id : string) : Promise<void> {
     this.setStatus("Initiating transaction... (please wait)");
 
     try {
       const mar = await MarCoin.deployed();
       await mar.sendCoin(input_receiver, parseInt(input_id), {from: this.account});
       this.setStatus("Transaction complete!");
-      this.refreshBalance();
+      await this.refreshBalance();
     } catch (e) {
       console.log(e);
       this.setStatus("Error sending coin; see log.");
+    };
+  }
+
+  async getCoinById (id : number) : Promise<Coin> {
+    let mar = await MarCoin.deployed();
+    return {
+      id,
+      content : await mar.coin_contents(id),
+      issuer  : await mar.coin_issuers(id),
+      owner   : await mar.coin_owners(id)
     };
   }
 }

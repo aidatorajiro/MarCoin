@@ -7,6 +7,7 @@ import { AboutPage } from '../pages/about/about';
 import { ContactPage } from '../pages/contact/contact';
 import { HomePage } from '../pages/home/home';
 import { TabsPage } from '../pages/tabs/tabs';
+import { Coindetail } from '../pages/coindetail/coindetail';
 
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
@@ -19,7 +20,8 @@ import { MarCoinProvider } from './providers/MarCoinProvider'
     AboutPage,
     ContactPage,
     HomePage,
-    TabsPage
+    TabsPage,
+    Coindetail
   ],
   imports: [
     BrowserModule,
@@ -31,7 +33,8 @@ import { MarCoinProvider } from './providers/MarCoinProvider'
     AboutPage,
     ContactPage,
     HomePage,
-    TabsPage
+    TabsPage,
+    Coindetail
   ],
   providers: [
     StatusBar,
