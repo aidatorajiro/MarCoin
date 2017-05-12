@@ -31,6 +31,10 @@ export class MyApp {
         return;
       }
 
+      setInterval(async ()=>{
+        await marprov.refreshBalance();
+      }, 5000);
+
       loading.dismiss();
     });
   }

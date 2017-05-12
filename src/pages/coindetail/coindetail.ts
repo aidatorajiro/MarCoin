@@ -22,7 +22,6 @@ export class Coindetail {
 
     try {
       this.coin_detail = await this.marprov.getDetailByID(this.params.data.id);
-      console.log(this.coin_detail);
     } catch (e) {
       loading.setContent("ERROR! (" + e + ")");
       return;

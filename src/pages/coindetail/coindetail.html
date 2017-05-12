@@ -5,4 +5,12 @@
 </ion-header>
 
 <ion-content padding>
+  <div *ngIf="coin_detail !== undefined">
+    blockHash: {{coin_detail.blockHash}}<br>
+    blockNumber: {{coin_detail.blockNumber}}<br>
+    blockTimestamp: {{coin_detail.blockTimestamp}}<br>
+    transactionHash: {{coin_detail.transactionHash}}<br>
+    transactionIndex: {{coin_detail.transactionIndex}}<br>
+    sistercoins: {{coin_detail.sistercoins}}<br>
+  </div>
 </ion-content>

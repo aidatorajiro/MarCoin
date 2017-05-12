@@ -3,8 +3,9 @@ import Web3 from "web3";
 import { default as contract } from 'truffle-contract'
 import marcoin_artifacts from '../../../build/contracts/MarCoin.json'
 
-let MarCoin : any = contract(marcoin_artifacts);
-let web3    : any;
+const MarCoin : any = contract(marcoin_artifacts);
+let web3      : any;
+let mar       : any;
 
 export interface Coin {
   id      : number,
@@ -30,6 +31,30 @@ export class MarCoinProvider {
   status   : string;
   coins    : Coin[];
 
+  private getAccounts() {
+    return new Promise((resolve, reject) => {
+      web3.eth.getAccounts((error, result) => {
+        if (error != null) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
+  private getEventResult(ev) : Promise<Array<any>> {
+    return new Promise((resolve, reject) => {
+      ev.get((error, result) => {
+        if (error != null) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
   async start() : Promise<void> {
 
     // Checking if Web3 has been injected by the browser (Mist/MetaMask)
@@ -46,22 +71,15 @@ export class MarCoinProvider {
     // Bootstrap the MarCoin abstraction for Use.
     MarCoin.setProvider(web3.currentProvider);
 
+    mar = await MarCoin.deployed();
+
     // Get the initial account balance so it can be displayed.
-    let accs = await new Promise((resolve, reject) => {
-      web3.eth.getAccounts((e, accounts) => {
-        if (e != null) {
-          reject(e);
-        } else {
-          resolve(accounts);
-        }
-      });
-    });
+    const accs = await this.getAccounts();
 
     this.setAccounts(accs);
     this.setAccount(accs[0]);
 
     await this.refreshBalance();
-    await this.startWatching();
   }
 
   setBalance (val) : void {
@@ -88,7 +106,6 @@ export class MarCoinProvider {
     this.setStatus("Initiating transaction... (please wait)");
 
     try {
-      const mar = await MarCoin.deployed();
       await mar.issueCoin(input_content, {from: this.account, gas: 1000000});
       this.setStatus("Transaction complete!");
       await this.refreshBalance();
@@ -102,7 +119,6 @@ export class MarCoinProvider {
     this.setStatus("Initiating transaction... (please wait)");
 
     try {
-      const mar = await MarCoin.deployed();
       await mar.sendCoin(input_receiver, parseInt(input_id), {from: this.account});
       this.setStatus("Transaction complete!");
       await this.refreshBalance();
@@ -115,7 +131,6 @@ export class MarCoinProvider {
   async refreshBalance () : Promise<void> {
     console.log("refreshing balance...");
     try {
-      const mar            = await MarCoin.deployed();
       const value : number = (await mar.getBalance.call(this.account, {from: this.account})).toNumber();
       this.setBalance(value);
       let coins : Coin[] = [];
@@ -131,7 +146,6 @@ export class MarCoinProvider {
   }
 
   async getCoinById (id : number) : Promise<Coin> {
-    let mar = await MarCoin.deployed();
     return {
       id,
       content : await mar.coin_contents(id),
@@ -141,26 +155,29 @@ export class MarCoinProvider {
   }
 
   async getDetailByID (id : number) : Promise<Detail> {
-    let mar = await MarCoin.deployed();
-    var create = mar.Create({_id: id}, {fromBlock: 0, toBlock: 'latest'});
-    var create_result = await new Promise(function (resolve, reject) {
-      create.get((error, result) => {
-        if (error != null) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    });
+    const create          = mar.Create(null, {fromBlock: 0, toBlock: 'latest'});
+    const create_result   = await this.getEventResult(create);
+    const create_filtered = create_result.filter((x)=>(x.args._id.equals(id)));
 
-    let tx = create_result[0];
+    const tx = create_filtered[0];
 
-    let blockHash        = tx.blockHash;
-    let blockNumber      = tx.blockNumber;
-    let blockTimestamp   = web3.eth.getBlock(blockNumber).timestamp;
-    let transactionHash  = tx.transactionHash;
-    let transactionIndex = tx.transactionIndex;
-    let sistercoins : Coin[] = [];
+    const blockHash        = tx.blockHash;
+    const blockNumber      = tx.blockNumber;
+    const blockTimestamp   = web3.eth.getBlock(blockNumber).timestamp;
+    const transactionHash  = tx.transactionHash;
+    const transactionIndex = tx.transactionIndex;
+
+    const sister        = mar.Create(null, {fromBlock: blockNumber, toBlock: blockNumber});
+    const sister_result = await this.getEventResult(sister);
+    const sistercoins   = await Promise.all(sister_result.map(async (c) => (
+      {
+        id : c.args._id,
+        content : c.args._content,
+        issuer  : c.args._issuer,
+        owner   : await mar.coin_owners(c.args._id)
+      }
+    )));
+
     return {
       blockHash,
       blockNumber,
@@ -169,15 +186,5 @@ export class MarCoinProvider {
       transactionIndex,
       sistercoins,
     };
-  }
-
-  async startWatching () {
-    let mar = await MarCoin.deployed();
-    var create        = mar.Create  ({_issuer: this.account});
-    var transfer_from = mar.Transfer({_from  : this.account});
-    var transfer_to   = mar.Transfer({_to    : this.account});
-    create       .watch(() => { this.refreshBalance() });
-    transfer_from.watch(() => { this.refreshBalance() });
-    transfer_to  .watch(() => { this.refreshBalance() });
   }
 }
