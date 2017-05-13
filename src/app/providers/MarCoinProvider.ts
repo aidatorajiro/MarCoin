@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import Web3 from "web3";
 import { default as contract } from 'truffle-contract'
 import marcoin_artifacts from '../../../build/contracts/MarCoin.json'
+import moment from "moment";
 
 const MarCoin : any = contract(marcoin_artifacts);
 let web3      : any;
@@ -17,7 +18,7 @@ export interface Coin {
 export interface Detail {
   blockHash        : string,
   blockNumber      : number,
-  blockTimestamp   : number,
+  blockTime        : moment.Moment,
   transactionHash  : string,
   transactionIndex : number,
   sistercoins      : Coin[],
@@ -155,15 +156,13 @@ export class MarCoinProvider {
   }
 
   async getDetailByID (id : number) : Promise<Detail> {
-    const create          = mar.Create(null, {fromBlock: 0, toBlock: 'latest'});
+    const create          = mar.Create({_id: id}, {fromBlock: 0, toBlock: 'latest'});
     const create_result   = await this.getEventResult(create);
-    const create_filtered = create_result.filter((x)=>(x.args._id.equals(id)));
-
-    const tx = create_filtered[0];
+    const tx = create_result[0];
 
     const blockHash        = tx.blockHash;
     const blockNumber      = tx.blockNumber;
-    const blockTimestamp   = web3.eth.getBlock(blockNumber).timestamp;
+    const blockTime        = moment.unix(web3.eth.getBlock(blockNumber).timestamp);
     const transactionHash  = tx.transactionHash;
     const transactionIndex = tx.transactionIndex;
 
@@ -181,7 +180,7 @@ export class MarCoinProvider {
     return {
       blockHash,
       blockNumber,
-      blockTimestamp,
+      blockTime,
       transactionHash,
       transactionIndex,
       sistercoins,
