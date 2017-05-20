@@ -1,16 +1,38 @@
 <ion-header>
   <ion-navbar>
-    <ion-title>Coin #{{params.data.id}} Detail</ion-title>
+    <ion-title>Coin #{{params.data}} Detail</ion-title>
   </ion-navbar>
 </ion-header>
 
 <ion-content padding>
-  <div *ngIf="coin_detail !== undefined">
-    blockHash: {{coin_detail.blockHash}}<br>
-    blockNumber: {{coin_detail.blockNumber}}<br>
-    blockTimestamp: {{coin_detail.blockTime}}<br>
-    transactionHash: {{coin_detail.transactionHash}}<br>
-    transactionIndex: {{coin_detail.transactionIndex}}<br>
-    sistercoins: {{coin_detail.sistercoins}}<br>
+  <div *ngIf="detail !== undefined">
+    <ion-grid>
+      <ion-row>
+        <ion-col col-3>登録されているブロックのハッシュ</ion-col>
+        <ion-col col-9>{{detail.blockHash}}</ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col col-3>登録されているブロックの番号</ion-col>
+        <ion-col col-9>{{detail.blockNumber}}</ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col col-3>登録日時</ion-col>
+        <ion-col col-9>{{detail.blockTime.format('LLL')}}</ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col col-3>トランザクションのハッシュ</ion-col>
+        <ion-col col-9>{{detail.transactionHash}}</ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col col-3>ブロック上での通し番号</ion-col>
+        <ion-col col-9>{{detail.transactionIndex}}</ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col col-3>同じブロックに登録されているコイン</ion-col>
+        <ion-col col-9>
+          <button ion-button *ngFor="let sistercoin of detail.sistercoins" [navPush]="coindetail" [navParams]="sistercoin.id">#{{sistercoin.id}}</button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
   </div>
 </ion-content>

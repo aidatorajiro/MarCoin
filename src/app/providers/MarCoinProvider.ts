@@ -4,6 +4,8 @@ import { default as contract } from 'truffle-contract'
 import marcoin_artifacts from '../../../build/contracts/MarCoin.json'
 import moment from "moment";
 
+moment.locale('ja');
+
 const MarCoin : any = contract(marcoin_artifacts);
 let web3      : any;
 let mar       : any;

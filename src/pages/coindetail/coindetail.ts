@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { IonicPage, NavController, NavParams, LoadingController } from 'ionic-angular';
+import { NavController, NavParams, LoadingController } from 'ionic-angular';
 import { MarCoinProvider, Detail } from "../../app/providers/MarCoinProvider";
 
 @Component({
@@ -7,7 +7,8 @@ import { MarCoinProvider, Detail } from "../../app/providers/MarCoinProvider";
   templateUrl: 'coindetail.html',
 })
 export class Coindetail {
-  coin_detail: Detail;
+  detail: Detail;
+  coindetail: typeof Coindetail = Coindetail;
 
   constructor(public navCtrl: NavController, public params: NavParams, public marprov: MarCoinProvider, public loadingCtrl: LoadingController) {
     this.start();
@@ -21,7 +22,7 @@ export class Coindetail {
     loading.present();
 
     try {
-      this.coin_detail = await this.marprov.getDetailByID(this.params.data.id);
+      this.detail = await this.marprov.getDetailByID(this.params.data);
     } catch (e) {
       loading.setContent("ERROR! (" + e + ")");
       return;
